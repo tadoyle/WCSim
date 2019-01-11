@@ -124,9 +124,12 @@ void sample_readfile(char *filename=NULL, bool verbose=false, bool save_hists=fa
   TH1F *hvtx0 = new TH1F("hvtx0", "Event VTX0", 200, -1500, 1500);
   TH1F *hvtx1 = new TH1F("hvtx1", "Event VTX1", 200, -1500, 1500);
   TH1F *hvtx2 = new TH1F("hvtx2", "Event VTX2", 200, -1500, 1500);
+  TH2F *h2 = new TH2F("h2","Time:Charge Distribution",100,1000,2000,30,0,15);
   
-  int num_trig=0;
-  
+  int num_trig=0;  
+  int countDarkNoise=0;
+  int countHits=0;
+
   // Now loop over events
   for (int ev=0; ev<nevent; ev++)
   {
@@ -168,7 +171,7 @@ void sample_readfile(char *filename=NULL, bool verbose=false, bool save_hists=fa
       
       WCSimRootTrack *wcsimroottrack = dynamic_cast<WCSimRootTrack*>(element);
 
-      if(verbose){
+      if(verbose && wcsimroottrack->GetE()>1){
 	printf("Track ipnu: %d\n",wcsimroottrack->GetIpnu());
 	printf("Track parent ID: %d\n",wcsimroottrack->GetParenttype());
       
@@ -212,7 +215,18 @@ void sample_readfile(char *filename=NULL, bool verbose=false, bool save_hists=fa
 
     // Grab the big arrays of times and parent IDs
     TClonesArray *timeArray = wcsimrootevent->GetCherenkovHitTimes();
+
+    int hitTimes = timeArray->GetEntries();
     
+    for (i=0; i<hitTimes; i++){
+      WCSimRootCherenkovHitTime* HitTime =
+	dynamic_cast<WCSimRootCherenkovHitTime*>(timeArray->At(i));
+      if(ev==0){
+	if(HitTime->GetParentID()<0) countDarkNoise = countDarkNoise + 1;
+	else countHits = countHits + 1;
+      }
+    }
+
     int totalPe = 0;
     // Loop through elements in the TClonesArray of WCSimRootCherenkovHits
     for (i=0; i< ncherenkovhits; i++)
@@ -236,7 +250,7 @@ void sample_readfile(char *filename=NULL, bool verbose=false, bool save_hists=fa
 	  WCSimRootCherenkovHitTime* HitTime = 
 	    dynamic_cast<WCSimRootCherenkovHitTime*>(timeArray->At(j));
 	  
-	  if(verbose) printf("%6.2f ", HitTime->GetTruetime() );	     
+	  if(verbose) printf("%6.2f ", HitTime->GetTruetime() );
 	}
 	if(verbose) cout << ")" << endl;
       }
@@ -273,6 +287,8 @@ void sample_readfile(char *filename=NULL, bool verbose=false, bool save_hists=fa
 
     	WCSimRootCherenkovDigiHit *wcsimrootcherenkovdigihit = 
     	  dynamic_cast<WCSimRootCherenkovDigiHit*>(element);
+
+	if(ev==0) h2->Fill(wcsimrootcherenkovdigihit->GetT(),wcsimrootcherenkovdigihit->GetQ());
 	
 	if(verbose){
 	  if ( i < 10 ) // Only print first XX=10 tubes
@@ -299,6 +315,11 @@ void sample_readfile(char *filename=NULL, bool verbose=false, bool save_hists=fa
   c1->cd(2); hvtx1->Draw();
   c1->cd(3); hvtx2->Draw();
   c1->cd(4); h1->Draw();
+
+  TCanvas* c2 = new TCanvas("c2", "Time:Charge Distribution", 500*n_wide*win_scale, 500*n_high*win_scale);
+  h2->Draw("COLZ");
+
+  cout << "Hits: " << countHits << " Dark Noise: " << countDarkNoise << endl;
 
   //save histograms to an output file
   if(save_hists) {
