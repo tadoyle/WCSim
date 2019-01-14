@@ -1,4 +1,4 @@
-#include "TSystem.h"
+1;4205;0c#include "TSystem.h"
 #include "TFile.h"
 #include "TTree.h"
 #include "TCanvas.h"
@@ -124,7 +124,9 @@ void sample_readfile(char *filename=NULL, bool verbose=false, bool save_hists=fa
   TH1F *hvtx0 = new TH1F("hvtx0", "Event VTX0", 200, -1500, 1500);
   TH1F *hvtx1 = new TH1F("hvtx1", "Event VTX1", 200, -1500, 1500);
   TH1F *hvtx2 = new TH1F("hvtx2", "Event VTX2", 200, -1500, 1500);
-  TH2F *h2 = new TH2F("h2","Time:Charge Distribution",100,1000,2000,30,0,15);
+  TH2F *h2 = new TH2F("h2","Time:Charge Distribution",205,-50,2000,30,0,15);
+  TH1F *htime = new TH1F("htime", "Track Time", 200, 0, 20);
+  TH1F *henergy = new TH1F("henergy", "Track Energy", 200, 0.1, 200);
   
   int num_trig=0;  
   int countDarkNoise=0;
@@ -182,7 +184,11 @@ void sample_readfile(char *filename=NULL, bool verbose=false, bool save_hists=fa
 	printf("Track mass: %f\n", wcsimroottrack->GetM());
       }
 
-      
+      if(wcsimroottrack->GetParenttype()==0 && wcsimroottrack->GetIpnu()==-11){
+	htime->Fill(wcsimroottrack->GetTime());
+	henergy->Fill(wcsimroottrack->GetE());
+      }
+
     }  // End of loop over tracks
     
     // Now look at the Cherenkov hits
@@ -288,8 +294,8 @@ void sample_readfile(char *filename=NULL, bool verbose=false, bool save_hists=fa
     	WCSimRootCherenkovDigiHit *wcsimrootcherenkovdigihit = 
     	  dynamic_cast<WCSimRootCherenkovDigiHit*>(element);
 
-	if(ev==0) h2->Fill(wcsimrootcherenkovdigihit->GetT(),wcsimrootcherenkovdigihit->GetQ());
-	
+	h2->Fill(wcsimrootcherenkovdigihit->GetT(),wcsimrootcherenkovdigihit->GetQ());
+
 	if(verbose){
 	  if ( i < 10 ) // Only print first XX=10 tubes
 	    printf("q, t, tubeid: %f %f %d \n",wcsimrootcherenkovdigihit->GetQ(),
@@ -318,6 +324,16 @@ void sample_readfile(char *filename=NULL, bool verbose=false, bool save_hists=fa
 
   TCanvas* c2 = new TCanvas("c2", "Time:Charge Distribution", 500*n_wide*win_scale, 500*n_high*win_scale);
   h2->Draw("COLZ");
+
+  TCanvas* c3 = new TCanvas("c3", "Track Time", 500*n_wide*win_scale, 500*n_high*win_scale);
+  htime->Draw();
+  htime->GetXaxis()->SetTitle("Time / s");
+  htime->GetYaxis()->SetTitle("#events");
+
+  TCanvas* c4 = new TCanvas("c4", "Track Energy", 500*n_wide*win_scale, 500*n_high*win_scale);
+  henergy->Draw();
+  henergy->GetXaxis()->SetTitle("Energy / MeV");
+  henergy->GetYaxis()->SetTitle("#events");
 
   cout << "Hits: " << countHits << " Dark Noise: " << countDarkNoise << endl;
 
