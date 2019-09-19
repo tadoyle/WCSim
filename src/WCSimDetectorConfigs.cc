@@ -182,8 +182,8 @@ void WCSimDetectorConstruction::Cylinder_60x74_20inchBandL_40perCent()
   WCPMTName           = PMT->GetPMTName();
   WCPMTExposeHeight   = PMT->GetExposeHeight();
   WCPMTRadius         = PMT->GetRadius();
-  WCIDDiameter          = 74.0*m;
-  WCIDHeight            = 60.0*m;
+  WCIDDiameter          = 70.8*m;
+  WCIDHeight            = 54.8*m;
   WCBarrelPMTOffset     = WCPMTRadius; //offset from vertical
   WCPMTperCellHorizontal= 4;
   WCPMTperCellVertical  = 3;
